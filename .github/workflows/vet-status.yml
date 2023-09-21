@@ -1,0 +1,8 @@
+jobs:
+  vet-status:
+    permissions:
+      issues: write
+    uses: Nemo157/nullus.github/.github/workflows/vet-status.yml@vet-status
+
+on:
+  workflow_dispatch:
