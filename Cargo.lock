@@ -258,18 +258,18 @@ dependencies = [
 
 [[package]]
 name = "culpa"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "342f946511fd882547ebd499adbf03b622c7dbf142820c6979ecc4e42bf470de"
+checksum = "5ae0bfe9317b1cb4ff5a56d766ee4b157b3e1f47f11979253570e88d10fd1fd3"
 dependencies = [
  "culpa-macros",
 ]
 
 [[package]]
 name = "culpa-macros"
-version = "1.0.1"
+version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e61b829854bb3199d0dc9bcb5ce466425530f3705d7773583bdd4170e6ea46a"
+checksum = "1234e1717066d3c71dcf89b75e7b586299e41204d361db56ec51e6ded5014279"
 dependencies = [
  "proc-macro2",
  "quote",
