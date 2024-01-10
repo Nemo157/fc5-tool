@@ -1,5 +1,5 @@
 use camino::Utf8PathBuf;
-use eyre::{Context, ContextCompat, Error, Result};
+use eyre::{Context, ContextCompat, Result};
 use std::fmt::Debug;
 
 use super::{
@@ -14,8 +14,8 @@ pub(crate) struct Region {
 }
 
 impl Debug for Region {
-    #[culpa::throws(std::fmt::Error)]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) {
+    #[culpa::try_fn]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Region")
             .field("coord", &self.coord)
             .field("path", &self.path)
@@ -24,9 +24,9 @@ impl Debug for Region {
 }
 
 impl Region {
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument]
-    pub(super) fn from_path(path: Utf8PathBuf) -> Option<Self> {
+    pub(super) fn from_path(path: Utf8PathBuf) -> Result<Option<Self>> {
         match std::fs::metadata(&path) {
             Ok(metadata) if metadata.len() == 0 => return None,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => return None,
@@ -46,9 +46,9 @@ impl Region {
         })
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(region.path = %self.path, region.coord = %self.coord, chunk.absolute_coord = %absolute_coord))]
-    pub(crate) fn chunk(&mut self, absolute_coord: Coord<i64>) -> Option<Chunk> {
+    pub(crate) fn chunk(&mut self, absolute_coord: Coord<i64>) -> Result<Option<Chunk>> {
         let relative_coord = make_relative(self.coord, absolute_coord)?;
         let Some(data) = self
             .region
@@ -60,9 +60,9 @@ impl Region {
         Some(Chunk::parse(relative_coord, absolute_coord, &data)?)
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(region.path = %self.path, region.coord = %self.coord, chunk.relative_coord = %chunk.relative_coord))]
-    pub(crate) fn save_chunk(&mut self, chunk: &Chunk) {
+    pub(crate) fn save_chunk(&mut self, chunk: &Chunk) -> Result<()> {
         self.region.write_chunk(
             chunk.relative_coord.x,
             chunk.relative_coord.z,
@@ -70,9 +70,9 @@ impl Region {
         )?;
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(region.path = %self.path, region.coord = %self.coord, chunk.absolute_coord = %absolute_coord, relative_coord))]
-    pub(crate) fn remove_chunk(&mut self, absolute_coord: Coord<i64>) {
+    pub(crate) fn remove_chunk(&mut self, absolute_coord: Coord<i64>) -> Result<()> {
         let relative_coord = make_relative(self.coord, absolute_coord)?;
         tracing::Span::current().record("relative_coord", relative_coord.to_string());
         self.region

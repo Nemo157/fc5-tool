@@ -1,10 +1,10 @@
-use eyre::{bail, Error};
+use eyre::{bail, Result};
 
 use crate::data::World;
 
-#[culpa::throws]
+#[culpa::try_fn]
 #[tracing::instrument(name = "set_seed", skip_all)]
-pub(super) fn run(world: &World, set_seed: i64) {
+pub(super) fn run(world: &World, set_seed: i64) -> Result<()> {
     let mut level = world.level()?;
     let Some(fastnbt::Value::Compound(data)) = level.get_mut("Data") else {
         bail!("bad Data")

@@ -1,5 +1,5 @@
 use camino::Utf8Path;
-use eyre::Error;
+use eyre::Result;
 
 mod chunk;
 mod coord;
@@ -21,18 +21,18 @@ pub(crate) use self::{
 
 pub(crate) type Compound = std::collections::HashMap<String, fastnbt::Value>;
 
-#[culpa::throws]
+#[culpa::try_fn]
 #[tracing::instrument]
-fn read_compound(path: &Utf8Path) -> Compound {
+fn read_compound(path: &Utf8Path) -> Result<Compound> {
     use std::io::Read;
     let mut data = Vec::with_capacity(4096);
     flate2::read::GzDecoder::new(std::fs::File::open(path)?).read_to_end(&mut data)?;
     fastnbt::from_bytes(&data)?
 }
 
-#[culpa::throws]
+#[culpa::try_fn]
 #[tracing::instrument(skip(value))]
-fn write_compound(path: &Utf8Path, value: &Compound) {
+fn write_compound(path: &Utf8Path, value: &Compound) -> Result<()> {
     use std::io::Write;
     flate2::write::GzEncoder::new(std::fs::File::create(path)?, flate2::Compression::best())
         .write_all(&fastnbt::to_bytes(value)?)?;

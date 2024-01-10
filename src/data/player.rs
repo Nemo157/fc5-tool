@@ -1,4 +1,4 @@
-use eyre::{bail, ContextCompat, Error};
+use eyre::{bail, ContextCompat, Result};
 use uuid::Uuid;
 
 use super::{dimension, Compound, Coord3};
@@ -9,9 +9,9 @@ pub(crate) struct Player {
 }
 
 impl Player {
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip(self), fields(player.uuid = %self.uuid))]
-    pub(crate) fn position(&self) -> Coord3 {
+    pub(crate) fn position(&self) -> Result<Coord3> {
         let Some(fastnbt::Value::List(position)) = self.data.get("Pos") else {
             bail!("bad Pos")
         };
@@ -24,25 +24,25 @@ impl Player {
         Coord3 { x, y, z }
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip(self), fields(player.uuid = %self.uuid, position = %position))]
-    pub(crate) fn set_position(&mut self, position: Coord3) {
+    pub(crate) fn set_position(&mut self, position: Coord3) -> Result<()> {
         self.data.insert(
             "Pos".into(),
             fastnbt::nbt!([position.x, position.y, position.z]),
         );
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip(self), fields(player.uuid = %self.uuid))]
-    pub(crate) fn dimension(&self) -> dimension::Kind {
+    pub(crate) fn dimension(&self) -> Result<dimension::Kind> {
         let dimension = self.data.get("Dimension").context("missing Dimension")?;
         dimension::Kind::from_nbt(dimension)?
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip(self), fields(player.uuid = %self.uuid, dimension.kind = %dimension))]
-    pub(crate) fn set_dimension(&mut self, dimension: dimension::Kind) {
+    pub(crate) fn set_dimension(&mut self, dimension: dimension::Kind) -> Result<()> {
         self.data.insert("Dimension".into(), dimension.nbt());
     }
 }

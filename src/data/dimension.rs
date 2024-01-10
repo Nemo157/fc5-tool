@@ -1,5 +1,5 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use eyre::{bail, Context, ContextCompat, Error, Result};
+use eyre::{bail, Context, ContextCompat, Result};
 
 use super::{Coord, Region};
 
@@ -12,8 +12,8 @@ pub(crate) enum Kind {
 }
 
 impl std::fmt::Display for Kind {
-    #[culpa::throws(std::fmt::Error)]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) {
+    #[culpa::try_fn]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Kind::Overworld => f.write_str("overworld")?,
             Kind::Nether => f.write_str("nether")?,
@@ -31,9 +31,9 @@ impl Kind {
         }
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(value = ?value))]
-    pub(super) fn from_nbt(value: &fastnbt::Value) -> Self {
+    pub(super) fn from_nbt(value: &fastnbt::Value) -> Result<Self> {
         match value.as_str().context("not string value")? {
             "minecraft:overworld" => Kind::Overworld,
             "minecraft:the_nether" => Kind::Nether,
@@ -61,17 +61,17 @@ impl Dimension {
         }
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(dimension.kind = %self.kind, dimension.directory = %self.directory, region.coord = %coord))]
-    pub(crate) fn region(&self, coord: Coord<i64>) -> Option<Region> {
+    pub(crate) fn region(&self, coord: Coord<i64>) -> Result<Option<Region>> {
         let Coord { x, z } = coord;
         let path = self.directory.join("region").join(format!("r.{x}.{z}.mca"));
         Region::from_path(path)?
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(dimension.kind = %self.kind, dimension.directory = %self.directory))]
-    pub(crate) fn regions(&self) -> impl Iterator<Item = Result<Region>> {
+    pub(crate) fn regions(&self) -> Result<impl Iterator<Item = Result<Region>>> {
         std::fs::read_dir(self.directory.join("region"))
             .context("reading region dir")?
             .filter_map(|entry| {
@@ -82,9 +82,9 @@ impl Dimension {
             })
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(dimension.kind = %self.kind, dimension.directory = %self.directory, region.coord = %coord))]
-    pub(crate) fn remove_region(&self, coord: Coord<i64>) {
+    pub(crate) fn remove_region(&self, coord: Coord<i64>) -> Result<()> {
         let Coord { x, z } = coord;
         let path = self.directory.join("region").join(format!("r.{x}.{z}.mca"));
         match std::fs::remove_file(path) {
@@ -94,15 +94,15 @@ impl Dimension {
         }?;
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(dimension.kind = %self.kind, dimension.directory = %self.directory, chunk.absolute_coord = %absolute_coord))]
-    pub(crate) fn region_for_chunk(&self, absolute_coord: Coord<i64>) -> Option<Region> {
+    pub(crate) fn region_for_chunk(&self, absolute_coord: Coord<i64>) -> Result<Option<Region>> {
         self.region(absolute_coord.chunk_to_region())?
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(dimension.kind = %self.kind, dimension.directory = %self.directory, region.coord = %coord))]
-    pub(crate) fn entity_region(&self, coord: Coord<i64>) -> Option<Region> {
+    pub(crate) fn entity_region(&self, coord: Coord<i64>) -> Result<Option<Region>> {
         let Coord { x, z } = coord;
         let path = self
             .directory
@@ -111,9 +111,9 @@ impl Dimension {
         Region::from_path(path)?
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(dimension.kind = %self.kind, dimension.directory = %self.directory))]
-    pub(crate) fn entity_regions(&self) -> impl Iterator<Item = Result<Region>> {
+    pub(crate) fn entity_regions(&self) -> Result<impl Iterator<Item = Result<Region>>> {
         std::fs::read_dir(self.directory.join("entities"))
             .context("reading entities dir")?
             .filter_map(|entry| {
@@ -124,9 +124,9 @@ impl Dimension {
             })
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(dimension.kind = %self.kind, dimension.directory = %self.directory, region.coord = %coord))]
-    pub(crate) fn remove_entity_region(&self, coord: Coord<i64>) {
+    pub(crate) fn remove_entity_region(&self, coord: Coord<i64>) -> Result<()> {
         let Coord { x, z } = coord;
         let path = self
             .directory

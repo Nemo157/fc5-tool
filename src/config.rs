@@ -1,5 +1,5 @@
 use camino::Utf8Path;
-use eyre::{ensure, Error};
+use eyre::{ensure, Error, Result};
 use std::collections::HashMap;
 
 use crate::data::{dimension, Coord, Coord3};
@@ -18,9 +18,9 @@ pub(crate) struct Config {
 }
 
 impl Config {
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument]
-    pub(crate) fn load(path: &Utf8Path) -> Self {
+    pub(crate) fn load(path: &Utf8Path) -> Result<Self> {
         std::fs::read_to_string(path)?.parse()?
     }
 }
@@ -28,8 +28,8 @@ impl Config {
 impl std::str::FromStr for Config {
     type Err = Error;
 
-    #[culpa::throws]
-    fn from_str(s: &str) -> Self {
+    #[culpa::try_fn]
+    fn from_str(s: &str) -> Result<Self> {
         toml::from_str(s)?
     }
 }
@@ -163,8 +163,8 @@ impl From<PersistentArea> for UnvalidatedPersistentArea {
 impl TryFrom<UnvalidatedPersistentArea> for PersistentArea {
     type Error = Error;
 
-    #[culpa::throws]
-    fn try_from(area: UnvalidatedPersistentArea) -> Self {
+    #[culpa::try_fn]
+    fn try_from(area: UnvalidatedPersistentArea) -> Result<Self> {
         match area {
             UnvalidatedPersistentArea::Square {
                 top_left,
@@ -196,14 +196,14 @@ mod tests {
         dimension, Blending, Config, Coord, Coord3, Dimension, Entities, HashMap, OutOfBounds,
         PersistentArea, Players, Relocate,
     };
-    use eyre::Error;
+    use eyre::Result;
     use indoc::indoc;
     use pretty_assertions::assert_eq;
     use std::str::FromStr;
 
     #[test]
-    #[culpa::throws]
-    fn smoke() {
+    #[culpa::try_fn]
+    fn smoke() -> Result<()> {
         assert_eq!(
             Config::from_str("")?,
             Config {
@@ -303,8 +303,8 @@ mod tests {
     }
 
     #[test]
-    #[culpa::throws]
-    fn bad_persistent_area_coordinates() {
+    #[culpa::try_fn]
+    fn bad_persistent_area_coordinates() -> Result<()> {
         assert_eq!(
             Config::from_str(indoc! { r#"
                 [[dimension.overworld.persistent]]

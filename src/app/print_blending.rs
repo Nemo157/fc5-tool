@@ -1,4 +1,4 @@
-use eyre::{bail, ContextCompat, Error};
+use eyre::{bail, ContextCompat, Result};
 
 use crate::data::{Coord, World};
 
@@ -9,8 +9,8 @@ pub(crate) struct Command {
 }
 
 impl Command {
-    #[culpa::throws]
-    pub(super) fn run(self, world: World) {
+    #[culpa::try_fn]
+    pub(super) fn run(self, world: World) -> Result<()> {
         let chunk = world
             .region_for_chunk(self.coord)?
             .context("missing region")?

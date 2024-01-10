@@ -1,4 +1,4 @@
-use eyre::Error;
+use eyre::{Error, Result};
 use std::collections::BTreeSet;
 
 use crate::{
@@ -6,9 +6,9 @@ use crate::{
     data::{Coord, World},
 };
 
-#[culpa::throws]
+#[culpa::try_fn]
 #[tracing::instrument(name = "delete", skip_all)]
-pub(super) fn run(world: &World, config: &Config) {
+pub(super) fn run(world: &World, config: &Config) -> Result<()> {
     for (dimension_kind, config::Dimension { persistent }) in &config.dimension {
         let _guard = tracing::info_span!("dimension", dimension.kind = %dimension_kind).entered();
 

@@ -1,5 +1,5 @@
 use camino::Utf8PathBuf;
-use eyre::Error;
+use eyre::{Error, Result};
 use itertools::Itertools;
 
 use crate::{
@@ -48,8 +48,8 @@ pub(crate) struct App {
 }
 
 impl App {
-    #[culpa::throws]
-    pub(super) fn run(self) {
+    #[culpa::try_fn]
+    pub(super) fn run(self) -> Result<()> {
         let world = World::new(&self.world);
         let mut config = Config::load(&self.world.join("fc5-tool.toml"))?;
         if self.verify_config {

@@ -1,4 +1,4 @@
-use eyre::{ensure, Context, ContextCompat, Error};
+use eyre::{ensure, Context, ContextCompat, Error, Result};
 use std::{
     fmt::{Debug, Display},
     str::FromStr,
@@ -11,9 +11,9 @@ pub(crate) struct Coord<T> {
 }
 
 impl Coord<i64> {
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(level = "debug")]
-    pub(super) fn from_region_file(name: &str) -> Self {
+    pub(super) fn from_region_file(name: &str) -> Result<Self> {
         let mut it = name.split('.');
         ensure!(it.next() == Some("r"), "missing `r` segment");
         let x = it
@@ -31,27 +31,27 @@ impl Coord<i64> {
         Self { x, z }
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(level = "trace", skip(self), fields(self = %self))]
-    pub(super) fn checked_mul(self, value: i64) -> Self {
+    pub(super) fn checked_mul(self, value: i64) -> Result<Self> {
         Self {
             x: self.x.checked_mul(value).context("out of range")?,
             z: self.z.checked_mul(value).context("out of range")?,
         }
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(level = "trace", skip(self, other), fields(self = %self, other = %other))]
-    pub(crate) fn checked_add(self, other: Self) -> Self {
+    pub(crate) fn checked_add(self, other: Self) -> Result<Self> {
         Self {
             x: self.x.checked_add(other.x).context("out of range")?,
             z: self.z.checked_add(other.z).context("out of range")?,
         }
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(level = "trace", skip(self, other), fields(self = %self, other = %other))]
-    pub(crate) fn checked_sub(self, other: Self) -> Self {
+    pub(crate) fn checked_sub(self, other: Self) -> Result<Self> {
         Self {
             x: self.x.checked_sub(other.x).context("out of range")?,
             z: self.z.checked_sub(other.z).context("out of range")?,
@@ -74,9 +74,9 @@ impl Coord<i64> {
 }
 
 impl<T> Coord<T> {
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(level = "trace", skip(other), fields(other = %other))]
-    fn try_from<U: Display>(other: Coord<U>) -> Self
+    fn try_from<U: Display>(other: Coord<U>) -> Result<Self>
     where
         T: TryFrom<U>,
         T::Error: std::error::Error + Send + Sync + 'static,
@@ -94,9 +94,9 @@ where
 {
     type Err = Error;
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument]
-    fn from_str(s: &str) -> Self {
+    fn from_str(s: &str) -> Result<Self> {
         let mut it = s.split(',');
         let x = it
             .next()
@@ -114,27 +114,27 @@ where
 }
 
 impl<T: Display> Display for Coord<T> {
-    #[culpa::throws(std::fmt::Error)]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) {
+    #[culpa::try_fn]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Self { x, z } = self;
         write!(f, "{x},{z}")?;
     }
 }
 
-#[culpa::throws]
+#[culpa::try_fn]
 #[tracing::instrument(level = "debug", skip_all, fields(region.coord = %region_coord, chunk.absolute_coord = %absolute_chunk_coord))]
 pub(super) fn make_relative(
     region_coord: Coord<i64>,
     absolute_chunk_coord: Coord<i64>,
-) -> Coord<usize> {
+) -> Result<Coord<usize>> {
     Coord::<usize>::try_from(absolute_chunk_coord.checked_sub(region_coord.checked_mul(32)?)?)?
 }
 
-#[culpa::throws]
+#[culpa::try_fn]
 #[tracing::instrument(level = "debug", skip_all, fields(region.coord = %region_coord, chunk.relative_coord = %relative_chunk_coord))]
 pub(super) fn make_absolute(
     region_coord: Coord<i64>,
     relative_chunk_coord: Coord<usize>,
-) -> Coord<i64> {
+) -> Result<Coord<i64>> {
     Coord::<i64>::try_from(relative_chunk_coord)?.checked_add(region_coord.checked_mul(32)?)?
 }

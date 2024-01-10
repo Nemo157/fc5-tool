@@ -18,8 +18,8 @@ impl Coord3 {
 }
 
 impl std::fmt::Display for Coord3 {
-    #[culpa::throws(std::fmt::Error)]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) {
+    #[culpa::try_fn]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Self { x, y, z } = self;
         write!(f, "{x},{y},{z}")?;
     }

@@ -1,13 +1,13 @@
-use eyre::Error;
+use eyre::Result;
 
 use crate::{
     config::{Config, OutOfBounds, PersistentArea},
     data::World,
 };
 
-#[culpa::throws]
+#[culpa::try_fn]
 #[tracing::instrument(name = "relocate", skip_all)]
-pub(super) fn run(world: &World, config: &Config) {
+pub(super) fn run(world: &World, config: &Config) -> Result<()> {
     if let Some(OutOfBounds::Relocate(relocate)) = config.players.out_of_bounds {
         'players: for uuid in world.players()? {
             let uuid = uuid?;

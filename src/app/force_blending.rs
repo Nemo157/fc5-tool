@@ -1,4 +1,4 @@
-use eyre::Error;
+use eyre::Result;
 
 use crate::{
     config::{self, Config, PersistentArea},
@@ -9,9 +9,9 @@ use crate::{
     },
 };
 
-#[culpa::throws]
+#[culpa::try_fn]
 #[tracing::instrument(name = "blend", skip_all)]
-pub(super) fn run(world: &World, config: &Config) {
+pub(super) fn run(world: &World, config: &Config) -> Result<()> {
     for (dimension_kind, config::Dimension { persistent }) in &config.dimension {
         let _guard = tracing::info_span!("dimension", dimension.kind = %dimension_kind).entered();
 

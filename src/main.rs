@@ -1,7 +1,8 @@
 #![allow(clippy::needless_question_mark)] // stupid lint, TODO: remove on 1.74
 
 use clap::Parser;
-use eyre::Error;
+use eyre::Result;
+
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod app;
@@ -23,8 +24,8 @@ struct Args {
     app: app::App,
 }
 
-#[culpa::throws]
-fn main() {
+#[culpa::try_fn]
+fn main() -> Result<()> {
     color_eyre::install()?;
 
     let args = Args::parse();

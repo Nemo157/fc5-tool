@@ -1,5 +1,5 @@
 use camino::{Utf8Path, Utf8PathBuf};
-use eyre::{Context, ContextCompat, Error, Result};
+use eyre::{Context, ContextCompat, Result};
 use uuid::Uuid;
 
 use super::{dimension, read_compound, write_compound, Compound, Dimension, Player};
@@ -20,21 +20,21 @@ impl World {
         Dimension::new(kind, &self.directory)
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(world.directory = %self.directory))]
-    pub(crate) fn level(&self) -> Compound {
+    pub(crate) fn level(&self) -> Result<Compound> {
         read_compound(&self.directory.join("level.dat"))?
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(world.directory = %self.directory))]
-    pub(crate) fn save_level(&self, data: &Compound) {
+    pub(crate) fn save_level(&self, data: &Compound) -> Result<()> {
         write_compound(&self.directory.join("level.dat"), data)?;
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(world.directory = %self.directory, uuid = %uuid))]
-    pub(crate) fn player(&self, uuid: Uuid) -> Player {
+    pub(crate) fn player(&self, uuid: Uuid) -> Result<Player> {
         Player {
             uuid,
             data: read_compound(
@@ -46,9 +46,9 @@ impl World {
         }
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(world.directory = %self.directory, player.uuid = %player.uuid))]
-    pub(crate) fn save_player(&self, player: &Player) {
+    pub(crate) fn save_player(&self, player: &Player) -> Result<()> {
         let Player { uuid, data } = player;
         write_compound(
             &self
@@ -59,9 +59,9 @@ impl World {
         )?;
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip_all, fields(world.directory = %self.directory))]
-    pub(crate) fn players(&self) -> impl Iterator<Item = Result<Uuid>> {
+    pub(crate) fn players(&self) -> Result<impl Iterator<Item = Result<Uuid>>> {
         std::fs::read_dir(self.directory.join("playerdata"))
             .context("reading region dir")?
             .filter_map(|entry| {

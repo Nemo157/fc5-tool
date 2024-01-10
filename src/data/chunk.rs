@@ -1,4 +1,4 @@
-use eyre::{bail, ensure, Context, Error};
+use eyre::{bail, ensure, Context, Result};
 use itertools::Itertools;
 
 use super::{Compound, Coord};
@@ -53,13 +53,13 @@ pub(crate) enum Direction {
 }
 
 impl Chunk {
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip(data), fields(chunk.relative_coord = %relative_coord, chunk.absolute_coord = %absolute_coord))]
     pub(super) fn parse(
         relative_coord: Coord<usize>,
         absolute_coord: Coord<i64>,
         data: &[u8],
-    ) -> Self {
+    ) -> Result<Self> {
         Self {
             relative_coord,
             absolute_coord,
@@ -67,15 +67,15 @@ impl Chunk {
         }
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip(self), fields(chunk.absolute_coord = %self.absolute_coord))]
-    pub(super) fn serialize(&self) -> Vec<u8> {
+    pub(super) fn serialize(&self) -> Result<Vec<u8>> {
         fastnbt::to_bytes(&self.data)?
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip(self), fields(chunk.absolute_coord = %self.absolute_coord))]
-    pub(crate) fn force_blending(&mut self) {
+    pub(crate) fn force_blending(&mut self) -> Result<()> {
         // ensure!(self.data.get("Status") == Some(&fastnbt::Value::String("minecraft:full".into())), "chunk is not fully generated");
         self.data.remove("isLightOn");
         self.data.insert(
@@ -87,9 +87,13 @@ impl Chunk {
         );
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip(self), fields(chunk.absolute_coord = %self.absolute_coord))]
-    pub(crate) fn force_blending_with_heights(&mut self, directions: [Direction; 2], offset: f64) {
+    pub(crate) fn force_blending_with_heights(
+        &mut self,
+        directions: [Direction; 2],
+        offset: f64,
+    ) -> Result<()> {
         // ensure!(self.data.get("Status") == Some(&fastnbt::Value::String("minecraft:full".into())), "chunk is not fully generated");
         let heights = {
             let heights = calculate_blending_heights(self.heightmaps()?.ocean_floor()?, offset);
@@ -127,9 +131,9 @@ impl Chunk {
         );
     }
 
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip(self), fields(chunk.absolute_coord = %self.absolute_coord))]
-    pub(crate) fn heightmaps(&self) -> Heightmaps<'_> {
+    pub(crate) fn heightmaps(&self) -> Result<Heightmaps<'_>> {
         let Some(fastnbt::Value::Compound(data)) = self.data.get("Heightmaps") else {
             bail!("bad Heightmaps")
         };
@@ -153,9 +157,9 @@ where
 }
 
 impl Heightmaps<'_> {
-    #[culpa::throws]
+    #[culpa::try_fn]
     #[tracing::instrument(skip(self), fields(chunk.absolute_coord = %self.chunk.absolute_coord))]
-    pub(crate) fn ocean_floor(&self) -> [[i16; 16]; 16] {
+    pub(crate) fn ocean_floor(&self) -> Result<[[i16; 16]; 16]> {
         let Some(fastnbt::Value::LongArray(data)) = self.data.get("OCEAN_FLOOR") else {
             bail!("bad OCEAN_FLOOR")
         };
